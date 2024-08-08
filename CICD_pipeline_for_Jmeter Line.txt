@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    
+    environment {
+        JMETER_HOME = "G:\\Jmeter\\apache-jmeter-5.6.3"
+        JMETER_BIN = "${JMETER_HOME}\\bin\\"
+        SCRIPT_PATH = "G:\\Jmeter\\scripts\\w3SchoolTesting.jmx"
+        RESULT_DIR = "G:\\Jmeter\\scripts\\result"
+        RESULT_CSV = "output.csv"
+        HTML_REPORT_DIR = "${RESULT_DIR}\\htmlReport"
+    }
+
+    stages {
+        stage('Run JMeter Test') {
+            steps {
+                echo 'Running JMeter test...'
+                // Ensure the result directory and HTML report directory exist
+                bat """
+                if not exist ${RESULT_DIR} mkdir ${RESULT_DIR}
+                if not exist ${HTML_REPORT_DIR} mkdir ${HTML_REPORT_DIR}
+                """
+                // Run the JMeter script in non-GUI mode with CSV and HTML report generation
+                bat """
+                ${JMETER_BIN}\\jmeter -n -t ${SCRIPT_PATH} -l ${RESULT_DIR}\\${RESULT_CSV} -e -o ${HTML_REPORT_DIR}
+                """
+                // List contents of the result directory to verify output files
+                bat """
+                dir ${RESULT_DIR}
+                dir ${HTML_REPORT_DIR}
+                """
+            }
+        }
+        
+        stage('Archive Results') {
+            steps {
+                echo 'Archiving test results...'
+                // Archive the CSV file
+                //archiveArtifacts artifacts: 'scripts/result/output.csv', allowEmptyArchive: false
+                // Archive the HTML report directory
+                //archiveArtifacts artifacts: 'scripts/result/htmlReport/**', allowEmptyArchive: false
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+    }
+}
